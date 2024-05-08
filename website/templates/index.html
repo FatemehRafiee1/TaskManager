@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: linear-gradient(to bottom right, #5b394d, #d1aab2, #FFE4C4);
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button[type="submit"] {
+            padding: 8px 14px;
+            background-color: #2691ae;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        .task {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0px;
+        }
+        .task p {
+            margin: 5;
+            font-family: 'Comic Neue', cursive;
+        }
+        .task .buttons-container {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            right: 20px; /* Adjust right position */
+        }
+        .task .buttons-container form {
+            margin-left: 0.5px; /* Add margin between buttons */
+        }
+        .done-tasks {
+            margin-top: 20px;
+            border-top: 2px solid #333;
+            padding-top: 20px;
+        }
+        .task.high p {
+            background-color: #a85555; /* Red */
+            padding: 5px; /* Add padding for spacing */
+            border-radius: 5px; /* Add border radius for rounded corners */
+            display: inline; /* Ensure inline display to only color the text */
+        }
+
+        .task.medium p {
+            background-color: #dddd7a; /* Yellow */
+            padding: 5px; /* Add padding for spacing */
+            border-radius: 5px; /* Add border radius for rounded corners */
+            display: inline; /* Ensure inline display to only color the text */
+        }
+
+        .task.low p {
+            background-color: #6da681; /* Green */
+            padding: 5px; /* Add padding for spacing */
+            border-radius: 5px; /* Add border radius for rounded corners */
+            display: inline; /* Ensure inline display to only color the text */
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #27001a;
+            color: white;
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 9999; /* Ensure it's above other content */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #fff; /* Add a bottom border */
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+        }
+
+        .navbar-links {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .navbar-links li {
+            display: inline;
+            margin-right: 10px;
+        }
+
+        .navbar-links li:not(:last-child) {
+            margin-right: 10px; /* Add margin between list items */
+            border-right: 1px solid #fff; /* Add a right border */
+            padding-right: 10px; /* Add some padding */
+        }
+
+        .navbar-links li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .container {
+            margin-top: 50px; /* Adjust navbar height */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Navbar section -->
+    <div class="navbar">
+        <div class="navbar-brand">Menu</div>
+        <ul class="navbar-links">
+            <li>Welcome, <strong>{{ username }}</strong></li> 
+            <li><a href="{{ url_for('auth.change_pass') }}">Change Password</a></li>
+            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h1>Task Manager</h1>
+        <!-- <form action="/" method="POST"> -->
+        <form action="{{ url_for('task_manager.add_task') }}" method="POST">
+
+            <input type="text" name="task" placeholder="Add a task..." required>
+            <select name="priority"> <!-- Add this dropdown menu -->
+                <option value="" selected hidden class="default">Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            
+            <button type="submit">Add Task</button>
+        </form>
+        <div class="task-container">
+            <h2>All Tasks</h2>
+            {% for index, task in tasks|enumerate %}
+                {% if not task['done'] %}  <!-- Only display tasks that are not marked as done -->
+                    <div class="task {% if task['priority'] == 'low' %}low{% elif task['priority'] == 'medium' %}medium{% else %}high{% endif %}">
+                        <p>{{ task['name'] }}</p>
+                        <div class="buttons-container">
+                            <form action="/edit/{{ index }}" method="GET">
+                                <button type="submit">Edit</button>
+                            </form>
+                            <form action="/delete/{{ index }}" method="POST">
+                                <button type="submit">Delete</button>
+                            </form>
+                            <form action="/mark_done/{{ index }}" method="POST">
+                                <button type="submit">Mark Done</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+       
+        <div class="done-tasks">
+            <h2>DONE</h2>
+            {% for index, task in tasks|enumerate %}
+                {% if task['done'] %}
+                    <div class="task done-task">
+                        <p style="text-decoration: line-through;">{{ task['name'] }}</p>
+                        <form action="/delete/{{ index }}" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+</body>
+</html>
